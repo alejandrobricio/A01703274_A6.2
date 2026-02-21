@@ -42,7 +42,9 @@ class TestReservation(unittest.TestCase):
 
     def test_reservation_with_missing_customer_raises(self):
         with self.assertRaises(ValueError):
-            self.system.create_reservation(Reservation("R3", "H1", "NO_CUSTOMER"))
+            self.system.create_reservation(
+                Reservation("R3", "H1", "NO_CUSTOMER")
+            )
 
     def test_reservation_when_no_rooms_available_raises(self):
         self.system.create_reservation(Reservation("R1", "H1", "C1"))
