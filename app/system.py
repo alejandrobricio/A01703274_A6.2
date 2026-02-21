@@ -16,7 +16,6 @@ from app.customer import Customer, validate_customer_dict
 from app.hotel import Hotel, validate_hotel_dict
 from app.reservation import (
     Reservation,
-    STATUS_ACTIVE,
     STATUS_CANCELLED,
     validate_reservation_dict,
 )
@@ -24,9 +23,10 @@ from app.storage import JsonStore
 
 
 class ReservationSystem:
-    """Main application service that coordinates storage and rules."""
+    """Service layer coordinating persistence and business rules."""
 
     def __init__(self, data_dir: Path) -> None:
+        """Initialize stores using the given data directory."""
         self._data_dir = data_dir
         self._hotels_store = JsonStore(data_dir / "hotels.json")
         self._customers_store = JsonStore(data_dir / "customers.json")
@@ -34,8 +34,10 @@ class ReservationSystem:
 
     # ---------- Hotels ----------
     def create_hotel(self, hotel: Hotel) -> None:
+        """Create or update a hotel record."""
         if not validate_hotel_dict(hotel.__dict__):
             raise ValueError("Invalid hotel data")
+
         self._hotels_store.upsert_record(
             hotel,
             key_field="hotel_id",
@@ -43,6 +45,7 @@ class ReservationSystem:
         )
 
     def delete_hotel(self, hotel_id: str) -> bool:
+        """Delete a hotel by id. Returns True if a record was deleted."""
         return self._hotels_store.delete_record(
             hotel_id,
             key_field="hotel_id",
@@ -50,24 +53,29 @@ class ReservationSystem:
         )
 
     def get_hotel(self, hotel_id: str) -> Optional[Hotel]:
-        hotels = self.list_hotels()
-        for h in hotels:
-            if h.hotel_id == hotel_id:
-                return h
+        """Return a hotel by id, or None if not found."""
+        for hotel in self.list_hotels():
+            if hotel.hotel_id == hotel_id:
+                return hotel
         return None
 
     def list_hotels(self) -> List[Hotel]:
-        records = self._hotels_store.load_records(validator=validate_hotel_dict)
-        return [Hotel(**r) for r in records]
+        """Return a list of all hotels stored."""
+        records = self._hotels_store.load_records(
+            validator=validate_hotel_dict
+        )
+        return [Hotel(**record) for record in records]
 
     def modify_hotel(self, hotel: Hotel) -> None:
-        # Same as create because upsert
+        """Modify a hotel record (implemented as an upsert)."""
         self.create_hotel(hotel)
 
     # ---------- Customers ----------
     def create_customer(self, customer: Customer) -> None:
+        """Create or update a customer record."""
         if not validate_customer_dict(customer.__dict__):
             raise ValueError("Invalid customer data")
+
         self._customers_store.upsert_record(
             customer,
             key_field="customer_id",
@@ -75,6 +83,7 @@ class ReservationSystem:
         )
 
     def delete_customer(self, customer_id: str) -> bool:
+        """Delete a customer by id. Returns True if a record was deleted."""
         return self._customers_store.delete_record(
             customer_id,
             key_field="customer_id",
@@ -82,23 +91,27 @@ class ReservationSystem:
         )
 
     def get_customer(self, customer_id: str) -> Optional[Customer]:
-        customers = self.list_customers()
-        for c in customers:
-            if c.customer_id == customer_id:
-                return c
+        """Return a customer by id, or None if not found."""
+        for customer in self.list_customers():
+            if customer.customer_id == customer_id:
+                return customer
         return None
 
     def list_customers(self) -> List[Customer]:
-        records = self._customers_store.load_records(validator=validate_customer_dict)
-        return [Customer(**r) for r in records]
+        """Return a list of all customers stored."""
+        records = self._customers_store.load_records(
+            validator=validate_customer_dict
+        )
+        return [Customer(**record) for record in records]
 
     def modify_customer(self, customer: Customer) -> None:
+        """Modify a customer record (implemented as an upsert)."""
         self.create_customer(customer)
 
     # ---------- Reservations ----------
     def create_reservation(self, reservation: Reservation) -> None:
         """
-        Creates a reservation if:
+        Create a reservation if:
         - hotel exists
         - customer exists
         - hotel has available rooms
@@ -117,14 +130,12 @@ class ReservationSystem:
         if hotel.available_rooms <= 0:
             raise ValueError("No rooms available")
 
-        # Save reservation
         self._reservations_store.upsert_record(
             reservation,
             key_field="reservation_id",
             validator=validate_reservation_dict,
         )
 
-        # Decrease available rooms
         updated_hotel = Hotel(
             hotel_id=hotel.hotel_id,
             name=hotel.name,
@@ -135,15 +146,14 @@ class ReservationSystem:
         self.modify_hotel(updated_hotel)
 
     def cancel_reservation(self, reservation_id: str) -> None:
+        """Cancel a reservation by id. Raises ValueError if not found."""
         reservation = self.get_reservation(reservation_id)
         if reservation is None:
             raise ValueError("Reservation does not exist")
 
         if reservation.status == STATUS_CANCELLED:
-            # idempotent cancel: do nothing
             return
 
-        # Mark reservation cancelled
         cancelled = Reservation(
             reservation_id=reservation.reservation_id,
             hotel_id=reservation.hotel_id,
@@ -156,10 +166,8 @@ class ReservationSystem:
             validator=validate_reservation_dict,
         )
 
-        # Increase hotel's available rooms back
         hotel = self.get_hotel(reservation.hotel_id)
         if hotel is None:
-            # If hotel missing, still keep reservation cancelled
             return
 
         updated_hotel = Hotel(
@@ -172,21 +180,22 @@ class ReservationSystem:
         self.modify_hotel(updated_hotel)
 
     def get_reservation(self, reservation_id: str) -> Optional[Reservation]:
-        reservations = self.list_reservations()
-        for r in reservations:
-            if r.reservation_id == reservation_id:
-                return r
+        """Return a reservation by id, or None if not found."""
+        for reservation in self.list_reservations():
+            if reservation.reservation_id == reservation_id:
+                return reservation
         return None
 
     def list_reservations(self) -> List[Reservation]:
+        """Return a list of all reservations stored."""
         records = self._reservations_store.load_records(
-            validator=validate_reservation_dict
+            validator=validate_reservation_dict,
         )
-        return [Reservation(**r) for r in records]
+        return [Reservation(**record) for record in records]
 
     # ---------- Convenience Display ----------
     def display_state(self) -> Dict[str, int]:
-        """Small helper so you can show system content if needed."""
+        """Return counts of stored hotels, customers, and reservations."""
         return {
             "hotels": len(self.list_hotels()),
             "customers": len(self.list_customers()),
