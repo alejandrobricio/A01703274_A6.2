@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+venv/
+
+# Coverage artifacts
+.coverage
+htmlcov/
+
+# macOS
+.DS_Store
+
