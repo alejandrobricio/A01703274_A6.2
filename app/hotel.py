@@ -12,6 +12,8 @@ from typing import Any, Dict
 
 @dataclass(frozen=True)
 class Hotel:
+    """Represents a hotel in the reservation system."""
+
     hotel_id: str
     name: str
     city: str
@@ -20,21 +22,33 @@ class Hotel:
 
 
 def validate_hotel_dict(data: Dict[str, Any]) -> bool:
-    required = {"hotel_id", "name", "city", "total_rooms", "available_rooms"}
+    """Validate that a dict contains a valid Hotel structure."""
+    required = {
+        "hotel_id",
+        "name",
+        "city",
+        "total_rooms",
+        "available_rooms",
+    }
+
     if not required.issubset(data.keys()):
         return False
 
-    if not isinstance(data["hotel_id"], str) or not data["hotel_id"].strip():
-        return False
-    if not isinstance(data["name"], str) or not data["name"].strip():
-        return False
-    if not isinstance(data["city"], str) or not data["city"].strip():
-        return False
-    if not isinstance(data["total_rooms"], int) or data["total_rooms"] <= 0:
-        return False
-    if not isinstance(data["available_rooms"], int):
-        return False
-    if data["available_rooms"] < 0 or data["available_rooms"] > data["total_rooms"]:
-        return False
+    hotel_id = data.get("hotel_id")
+    name = data.get("name")
+    city = data.get("city")
+    total_rooms = data.get("total_rooms")
+    available_rooms = data.get("available_rooms")
 
-    return True
+    checks = [
+        isinstance(hotel_id, str) and hotel_id.strip(),
+        isinstance(name, str) and name.strip(),
+        isinstance(city, str) and city.strip(),
+        isinstance(total_rooms, int) and total_rooms > 0,
+        isinstance(available_rooms, int),
+        isinstance(total_rooms, int)
+        and isinstance(available_rooms, int)
+        and 0 <= available_rooms <= total_rooms,
+    ]
+
+    return all(checks)
