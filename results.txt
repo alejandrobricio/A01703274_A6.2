@@ -1,0 +1,18 @@
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+Name                                 Stmts   Miss  Cover   Missing
+------------------------------------------------------------------
+app/__init__.py                          0      0   100%
+app/customer.py                         17      1    94%   26
+app/hotel.py                            21      1    95%   35
+app/reservation.py                      21      3    86%   31, 35, 38
+app/storage.py                          70     10    86%   34, 57, 66-70, 75-79, 117, 152-154
+app/system.py                           82      4    95%   120, 155, 171, 199
+tests/test_customer.py                  33      0   100%
+tests/test_hotel.py                     34      0   100%
+tests/test_reservation.py               38      0   100%
+tests/test_storage_invalid_data.py      31      0   100%
+------------------------------------------------------------------
+TOTAL                                  347     19    95%
