@@ -16,6 +16,8 @@ STATUS_CANCELLED = "CANCELLED"
 
 @dataclass(frozen=True)
 class Reservation:
+    """Represents a reservation in the reservation system."""
+
     reservation_id: str
     hotel_id: str
     customer_id: str
@@ -23,6 +25,7 @@ class Reservation:
 
 
 def validate_reservation_dict(data: Dict[str, Any]) -> bool:
+    """Validate that a dict contains a valid Reservation structure."""
     required = {"reservation_id", "hotel_id", "customer_id", "status"}
     if not required.issubset(data.keys()):
         return False

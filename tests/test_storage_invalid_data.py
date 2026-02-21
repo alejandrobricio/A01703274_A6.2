@@ -1,3 +1,4 @@
+# pylint: disable=consider-using-with
 """Unit tests for JsonStore invalid data handling."""
 
 import io

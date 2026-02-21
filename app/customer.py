@@ -25,19 +25,13 @@ def validate_customer_dict(data: Dict[str, Any]) -> bool:
     if not required.issubset(data.keys()):
         return False
 
-    if not isinstance(data["customer_id"], str):
-        return False
-    if not data["customer_id"].strip():
-        return False
+    customer_id = data.get("customer_id")
+    name = data.get("name")
+    email = data.get("email")
 
-    if not isinstance(data["name"], str):
-        return False
-    if not data["name"].strip():
-        return False
-
-    if not isinstance(data["email"], str):
-        return False
-    if "@" not in data["email"]:
-        return False
-
-    return True
+    checks = [
+        isinstance(customer_id, str) and customer_id.strip(),
+        isinstance(name, str) and name.strip(),
+        isinstance(email, str) and "@" in email,
+    ]
+    return all(checks)
