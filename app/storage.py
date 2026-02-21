@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 
 def _safe_print(message: str) -> None:
-    # Centralized print to ease testing/mocking if needed
+    """Print wrapper to simplify testing/mocking if needed."""
     print(message)
 
 
@@ -30,6 +30,7 @@ class JsonStore:
 
     @property
     def file_path(self) -> Path:
+        """Return store file path."""
         return self._file_path
 
     def load_records(
@@ -39,7 +40,8 @@ class JsonStore:
         default: Optional[List[Dict[str, Any]]] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Loads records from JSON file.
+        Load records from JSON file.
+
         - Returns default ([]) on missing file or JSON decode errors.
         - If validator is provided, invalid records are skipped.
         """
@@ -55,7 +57,9 @@ class JsonStore:
                 return list(default)
             data = json.loads(raw)
         except (OSError, json.JSONDecodeError) as exc:
-            _safe_print(f"[ERROR] Invalid JSON in {self._file_path.name}: {exc}")
+            _safe_print(
+                f"[ERROR] Invalid JSON in {self._file_path.name}: {exc}"
+            )
             return list(default)
 
         if not isinstance(data, list):
@@ -73,19 +77,27 @@ class JsonStore:
                     f"{self._file_path.name}: expected dict"
                 )
                 continue
+
             if validator is not None and not validator(item):
                 _safe_print(
                     f"[ERROR] Invalid record fields at index {idx} in "
                     f"{self._file_path.name}: {item}"
                 )
                 continue
+
             records.append(item)
+
         return records
 
     def save_records(self, records: List[Dict[str, Any]]) -> None:
-        """Saves list of dict records as pretty JSON."""
+        """Save list of dict records as pretty JSON."""
         self._file_path.parent.mkdir(parents=True, exist_ok=True)
-        text = json.dumps(records, indent=2, ensure_ascii=False, sort_keys=True)
+        text = json.dumps(
+            records,
+            indent=2,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
         self._file_path.write_text(text + "\n", encoding="utf-8")
 
     def upsert_record(
@@ -97,6 +109,7 @@ class JsonStore:
     ) -> None:
         """
         Insert or update a record by key_field.
+
         record can be a dataclass or dict.
         """
         payload = self._to_dict(record)
@@ -124,7 +137,7 @@ class JsonStore:
         key_field: str,
         validator: Optional[Callable[[Dict[str, Any]], bool]] = None,
     ) -> bool:
-        """Deletes by key. Returns True if deleted."""
+        """Delete by key. Returns True if deleted."""
         records = self.load_records(validator=validator, default=[])
         kept = [r for r in records if r.get(key_field) != record_id]
         deleted = len(kept) != len(records)
@@ -133,6 +146,7 @@ class JsonStore:
 
     @staticmethod
     def _to_dict(obj: Any) -> Dict[str, Any]:
+        """Convert dataclass or dict record to a plain dict."""
         if is_dataclass(obj):
             return asdict(obj)
         if isinstance(obj, dict):
